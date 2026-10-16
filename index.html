@@ -1,0 +1,1587 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GasLab | Gasos Ideals i Llei de Dalton</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- KaTeX for math rendering -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    .katex { font-size: 1.08em; }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white p-3 sm:p-5 lg:p-6">
+
+  <div class="max-w-6xl mx-auto w-full flex-1 flex flex-col">
+
+    <!-- ================================================================= -->
+    <!-- CABECERA INSTITUCIONAL (SEGONS LES FONTS DEL QUADERN)             -->
+    <!-- ================================================================= -->
+    <header class="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-4 sm:p-5 mb-3">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        
+        <!-- Left: Logo & Subject Title -->
+        <div class="flex items-center space-x-3.5">
+          <div class="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-100 flex-shrink-0">
+            <i class="fa-solid fa-atom text-2xl"></i>
+          </div>
+          <div>
+            <div class="flex items-center space-x-2">
+              <h1 class="font-extrabold text-xl sm:text-2xl text-slate-900 tracking-tight">GasLab</h1>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-100 text-indigo-700 uppercase">BAT_FQ 26-27</span>
+            </div>
+            <p class="text-xs text-slate-500 font-medium">Elena Ruiz Alfaro</p>
+          </div>
+        </div>
+
+        <!-- Right: Language Toggle & Stat Capsules -->
+        <div class="flex flex-wrap items-center gap-2 sm:gap-2.5">
+          
+          <!-- Bilingual Pill Switcher -->
+          <div class="inline-flex rounded-full bg-slate-100 p-1 border border-slate-200 text-xs">
+            <button onclick="setLanguage('ca')" id="btn-lang-ca" class="px-3 py-1 rounded-full font-bold bg-white text-indigo-700 shadow-sm transition-all">Català</button>
+            <button onclick="setLanguage('es')" id="btn-lang-es" class="px-3 py-1 rounded-full font-semibold text-slate-500 hover:text-slate-800 transition-all">Castellano</button>
+          </div>
+
+          <!-- Aciertos Pill -->
+          <div class="px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-bold tracking-wide flex items-center space-x-1.5">
+            <span data-i18n="score_label">ACIERTOS:</span>
+            <span id="score-counter" class="font-mono text-sm">0</span>
+          </div>
+
+          <!-- Récord Pill -->
+          <div class="px-3.5 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-xs font-bold tracking-wide flex items-center space-x-1.5">
+            <span data-i18n="record_label">RÉCORD:</span>
+            <span id="record-counter" class="font-mono text-sm">0</span>
+          </div>
+
+          <!-- Racha Pill -->
+          <div class="px-3.5 py-1.5 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-bold tracking-wide flex items-center space-x-1">
+            <span>🔥</span>
+            <span data-i18n="streak_label">RACHA:</span>
+            <span id="streak-counter" class="font-mono text-sm font-extrabold ml-0.5">0</span>
+          </div>
+
+        </div>
+      </div>
+    </header>
+
+    <!-- ================================================================= -->
+    <!-- CRONÓMETRO FLOTANTE CENTRADO (PASTILLA HORIZONTAL)                -->
+    <!-- ================================================================= -->
+    <div class="flex justify-center mb-3">
+      <div class="inline-flex items-center space-x-3 bg-white px-5 py-2 rounded-full border border-slate-200 shadow-sm text-xs font-bold text-slate-700">
+        <div class="flex items-center space-x-1.5">
+          <i class="fa-regular fa-clock text-slate-400"></i>
+          <span data-i18n="timer_title" class="uppercase text-[11px] tracking-wider text-slate-500">TIEMPO:</span>
+          <span id="timer-display" class="font-mono text-base font-extrabold text-slate-900 ml-1">00:00</span>
+        </div>
+        <div class="flex items-center space-x-1 border-l border-slate-200 pl-3">
+          <button onclick="toggleTimer()" id="timer-toggle-btn" class="w-6 h-6 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-600 transition-colors" title="Pausar / Reprendre">
+            <i class="fa-solid fa-pause text-xs" id="timer-toggle-icon"></i>
+          </button>
+          <button onclick="resetTimer()" class="w-6 h-6 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-600 transition-colors" title="Reiniciar cronòmetre">
+            <i class="fa-solid fa-rotate-right text-xs"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- BARRA HORIZONTAL DE ALUMNO/A Y ACCESO A PDF (FUENTES DEL CUADERNO) -->
+    <!-- ================================================================= -->
+    <div class="bg-white rounded-2xl border border-slate-200/90 p-3.5 sm:p-4 mb-4 shadow-sm flex flex-col md:flex-row items-center justify-between gap-3">
+      
+      <!-- Student Name Input -->
+      <div class="flex items-center space-x-2 w-full md:w-auto flex-1 max-w-md">
+        <label for="student-name-input" class="text-xs font-bold text-slate-600 flex items-center flex-shrink-0">
+          <i class="fa-solid fa-user-graduate text-slate-400 mr-2 text-sm"></i>
+          <span data-i18n="student_label">Alumno/a:</span>
+        </label>
+        <input type="text" id="student-name-input" placeholder="Ej. Ana García" class="w-full px-3 py-1.5 text-xs font-medium rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+      </div>
+
+      <!-- Category Progress Badges -->
+      <div class="flex items-center space-x-2 text-xs font-medium text-slate-600 overflow-x-auto w-full md:w-auto justify-center">
+        <div class="px-3 py-1 rounded-full bg-slate-100 border border-slate-200 flex items-center space-x-1">
+          <span class="text-slate-500">Ideals:</span>
+          <strong id="prog-ideal" class="text-indigo-600 font-mono">0</strong>
+        </div>
+        <div class="px-3 py-1 rounded-full bg-slate-100 border border-slate-200 flex items-center space-x-1">
+          <span class="text-slate-500" data-i18n="badge_transf">Transf:</span>
+          <strong id="prog-transf" class="text-indigo-600 font-mono">0</strong>
+        </div>
+        <div class="px-3 py-1 rounded-full bg-slate-100 border border-slate-200 flex items-center space-x-1">
+          <span class="text-slate-500">Dalton:</span>
+          <strong id="prog-dalton" class="text-indigo-600 font-mono">0</strong>
+        </div>
+        <div class="px-3 py-1 rounded-full bg-slate-100 border border-slate-200 flex items-center space-x-1">
+          <span class="text-slate-500">Densitat:</span>
+          <strong id="prog-density" class="text-indigo-600 font-mono">0</strong>
+        </div>
+      </div>
+
+      <!-- Green Generate PDF Button -->
+      <button onclick="printReport()" class="w-full md:w-auto px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-md shadow-emerald-100 transition-all flex items-center justify-center space-x-2 flex-shrink-0">
+        <i class="fa-solid fa-file-pdf text-sm"></i>
+        <span data-i18n="btn_pdf">Generar PDF de Sesión</span>
+      </button>
+
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- NAVEGACIÓN PRINCIPAL (SOLO ENTRENADOR Y FORMULARIO/APUNTES)       -->
+    <!-- ================================================================= -->
+    <div class="flex items-center space-x-2 mb-4">
+      <button onclick="switchTab('trainer')" id="nav-btn-trainer" class="tab-nav-btn active px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center space-x-2 bg-indigo-600 text-white shadow-sm">
+        <i class="fa-solid fa-calculator"></i>
+        <span data-i18n="nav_problems">Entrenador de Problemes</span>
+      </button>
+      <button onclick="switchTab('theory')" id="nav-btn-theory" class="tab-nav-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all flex items-center space-x-2 bg-white border border-slate-200">
+        <i class="fa-solid fa-book-open"></i>
+        <span data-i18n="nav_theory">Formulari & Apunts</span>
+      </button>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- SECCIÓN 1: ENTRENADOR DE PROBLEMES AMB FACTORS DE CONVERSIÓ       -->
+    <!-- ================================================================= -->
+    <section id="panel-trainer" class="tab-panel space-y-4">
+      
+      <!-- Category selector bar -->
+      <div class="bg-white rounded-2xl border border-slate-200/90 p-3 sm:p-4 shadow-sm flex flex-col md:flex-row items-center justify-between gap-3">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-500" data-i18n="trainer_category">Categoria de problema:</span>
+          <div class="inline-flex flex-wrap rounded-xl bg-slate-100 p-1 border border-slate-200 text-xs gap-1">
+            <button onclick="setProblemCategory('all')" id="cat-all" class="cat-pill active px-3 py-1.5 rounded-lg font-bold bg-white text-indigo-700 shadow-sm transition-all" data-i18n="cat_all">Tots</button>
+            <button onclick="setProblemCategory('ideal')" id="cat-ideal" class="cat-pill px-3 py-1.5 rounded-lg font-medium text-slate-600 hover:text-slate-900 transition-all" data-i18n="cat_ideal">Gasos Ideals (PV=nRT)</button>
+            <button onclick="setProblemCategory('transf')" id="cat-transf" class="cat-pill px-3 py-1.5 rounded-lg font-medium text-slate-600 hover:text-slate-900 transition-all" data-i18n="cat_transf">Transformacions (Lleis i Eq. General)</button>
+            <button onclick="setProblemCategory('dalton')" id="cat-dalton" class="cat-pill px-3 py-1.5 rounded-lg font-medium text-slate-600 hover:text-slate-900 transition-all" data-i18n="cat_dalton">Llei de Dalton & Mescles</button>
+            <button onclick="setProblemCategory('density')" id="cat-density" class="cat-pill px-3 py-1.5 rounded-lg font-medium text-slate-600 hover:text-slate-900 transition-all" data-i18n="cat_density">Densitat & Volum Molar</button>
+          </div>
+        </div>
+
+        <button onclick="generateNewProblem()" class="w-full md:w-auto px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-xl border border-indigo-200 transition-all flex items-center justify-center space-x-2">
+          <i class="fa-solid fa-dice"></i>
+          <span data-i18n="btn_new_problem">Generar Nou Problema</span>
+        </button>
+      </div>
+
+      <!-- Problem Statement Card -->
+      <div class="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden">
+        <div class="bg-slate-50/80 px-6 py-3.5 border-b border-slate-200 flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <span id="problem-badge" class="px-3 py-1 rounded-full text-xs font-extrabold bg-blue-100 text-blue-700 uppercase tracking-wider">Gasos Ideals</span>
+            <span class="text-xs text-slate-500 font-mono font-semibold" id="problem-id">#GAS-101</span>
+          </div>
+          <span class="text-xs text-slate-400 font-medium">IEDIB • BAT_FQ 2.1</span>
+        </div>
+
+        <div class="p-6 sm:p-8 space-y-6">
+          <!-- Text Enunciat -->
+          <div class="p-5 sm:p-6 rounded-2xl bg-indigo-50/40 border border-indigo-100 text-slate-800 text-base sm:text-lg leading-relaxed" id="problem-text">
+            Carregant enunciat del problema...
+          </div>
+
+          <!-- Given Constants -->
+          <div class="flex flex-wrap items-center gap-2 text-xs font-mono bg-slate-50 p-3.5 rounded-2xl border border-slate-200" id="problem-data">
+            <span class="font-bold text-slate-700 font-sans flex items-center mr-1">
+              <i class="fa-solid fa-bookmark text-indigo-500 mr-1.5"></i><span data-i18n="constants_label">Dades útils:</span>
+            </span>
+            <span class="bg-white px-2.5 py-1 rounded-lg border border-slate-200 text-slate-700">R = 0,082 atm·L/(mol·K)</span>
+            <span class="bg-white px-2.5 py-1 rounded-lg border border-slate-200 text-slate-700">1 atm = 760 mmHg</span>
+            <span class="bg-white px-2.5 py-1 rounded-lg border border-slate-200 text-slate-700" id="atomic-masses-data">C=12; H=1; O=16; N=14</span>
+          </div>
+
+          <!-- Question Input Field -->
+          <div class="border-t border-slate-100 pt-5 space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <label for="student-answer-input" class="text-sm font-bold text-slate-800 flex items-center">
+                <i class="fa-solid fa-pen-to-square text-indigo-600 mr-2 text-base"></i>
+                <span id="problem-question-prompt">Calcula el valor requerit:</span>
+              </label>
+              <span class="text-xs text-slate-500 font-mono bg-slate-100 px-2.5 py-1 rounded-md" id="expected-unit-hint">Unitat esperada: atm</span>
+            </div>
+
+            <div class="flex items-center space-x-3">
+              <div class="relative flex-1">
+                <input type="number" step="any" id="student-answer-input" placeholder="Escriu el valor numèric (ex: 2.34)..." class="w-full px-4 py-3 rounded-2xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-mono text-base outline-none transition-all shadow-sm" onkeydown="if(event.key==='Enter') checkProblemAnswer()">
+                <span id="input-unit-label" class="absolute right-4 top-1/2 -translate-y-1/2 font-mono text-xs text-slate-400 font-bold">atm</span>
+              </div>
+
+              <button onclick="checkProblemAnswer()" id="btn-check-answer" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl shadow-md shadow-emerald-100 transition-all flex items-center space-x-2">
+                <i class="fa-solid fa-circle-check"></i>
+                <span data-i18n="btn_check">Comprovar</span>
+              </button>
+
+              <button onclick="toggleHint()" class="px-4 py-3 border border-slate-300 hover:bg-slate-100 text-slate-600 rounded-2xl transition-all shadow-sm" title="Pista / Guia">
+                <i class="fa-solid fa-wand-magic-sparkles text-amber-500"></i>
+              </button>
+            </div>
+
+            <!-- Hint Box -->
+            <div id="hint-box" class="hidden p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-900 leading-relaxed shadow-sm">
+              <div class="font-bold mb-1 flex items-center text-amber-800"><i class="fa-solid fa-lightbulb text-amber-500 mr-2"></i>Pista pedagògica:</div>
+              <p id="hint-text" class="text-slate-700"></p>
+            </div>
+
+            <!-- Feedback Banner -->
+            <div id="feedback-banner" class="hidden p-4 rounded-2xl text-sm leading-relaxed transition-all"></div>
+
+            <!-- Resolution with Conversion Factors -->
+            <div id="solution-container" class="hidden space-y-4 pt-4 border-t border-slate-200">
+              <div class="flex items-center justify-between pb-1">
+                <div class="flex items-center space-x-2">
+                  <div class="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                  </div>
+                  <div>
+                    <h4 class="font-extrabold text-base text-slate-900" data-i18n="sol_title">Resolució Oficial amb Factors de Conversió</h4>
+                    <p class="text-xs text-slate-500" data-i18n="sol_subtitle">Criteris de correcció i justificació curricular (BAT_FQ / PBAU)</p>
+                  </div>
+                </div>
+                <span class="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full font-bold flex items-center">
+                  <i class="fa-solid fa-check mr-1.5"></i>Factors aplicats
+                </span>
+              </div>
+
+              <!-- Steps rendered dynamically -->
+              <div class="space-y-3" id="step-by-step-steps"></div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- SECCIÓN 2: FORMULARI & APUNTS                                     -->
+    <!-- ================================================================= -->
+    <section id="panel-theory" class="tab-panel hidden space-y-4">
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        
+        <!-- Box 1: Lleis Empíriques -->
+        <div class="bg-white rounded-3xl border border-slate-200/90 p-5 shadow-sm space-y-3">
+          <div class="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm">1</div>
+          <h3 class="font-bold text-base text-slate-800">Lleis Experimentals dels Gasos</h3>
+          <p class="text-xs text-slate-500">Processos simples amb una variable d'estat constant:</p>
+          <div class="space-y-2 text-xs bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+            <div><strong class="text-slate-800 block mb-0.5">Boyle-Mariotte (T = const):</strong> \(P_1 \cdot V_1 = P_2 \cdot V_2\)</div>
+            <div><strong class="text-slate-800 block mb-0.5">Charles (P = const):</strong> \(\frac{V_1}{T_1} = \frac{V_2}{T_2}\)</div>
+            <div><strong class="text-slate-800 block mb-0.5">Gay-Lussac (V = const):</strong> \(\frac{P_1}{T_1} = \frac{P_2}{T_2}\)</div>
+            <div><strong class="text-slate-800 block mb-0.5">Equació General:</strong> \(\frac{P_1 \cdot V_1}{T_1} = \frac{P_2 \cdot V_2}{T_2}\)</div>
+          </div>
+        </div>
+
+        <!-- Box 2: Equació d'Estat i Densitat -->
+        <div class="bg-white rounded-3xl border border-slate-200/90 p-5 shadow-sm space-y-3">
+          <div class="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-sm">2</div>
+          <h3 class="font-bold text-base text-slate-800">Equació d'Estat dels Gasos Ideals</h3>
+          <p class="text-xs text-slate-500">Relació d'estat per a \(n\) mols de gas:</p>
+          <div class="space-y-2 text-xs bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+            <div><strong class="text-slate-800 block mb-0.5">Equació d'estat fonamental:</strong> \(P \cdot V = n \cdot R \cdot T\)</div>
+            <div><strong class="text-slate-800 block mb-0.5">En funció de la massa:</strong> \(P \cdot V = \frac{m}{M} \cdot R \cdot T\)</div>
+            <div><strong class="text-slate-800 block mb-0.5">Densitat del gas (\(d = \frac{m}{V}\)):</strong> \(P = \frac{d \cdot R \cdot T}{M} \implies d = \frac{P \cdot M}{R \cdot T}\)</div>
+            <div><strong class="text-slate-800 block mb-0.5">Volum Molar en c.n. (0 ºC, 1 atm):</strong> \(V_m = 22{,}4\text{ L/mol}\)</div>
+          </div>
+        </div>
+
+        <!-- Box 3: Llei de Dalton -->
+        <div class="bg-white rounded-3xl border border-slate-200/90 p-5 shadow-sm space-y-3">
+          <div class="w-8 h-8 rounded-xl bg-pink-100 text-pink-700 flex items-center justify-center font-bold text-sm">3</div>
+          <h3 class="font-bold text-base text-slate-800">Llei de Dalton de Pressions Parcials</h3>
+          <p class="text-xs text-slate-500">Mescles de gasos en un mateix recipient:</p>
+          <div class="space-y-2 text-xs bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+            <div><strong class="text-slate-800 block mb-0.5">Pressió Total:</strong> \(P_T = P_1 + P_2 + \dots + P_n\)</div>
+            <div><strong class="text-slate-800 block mb-0.5">Fracció Molar (\(X_i\)):</strong> \(X_i = \frac{n_i}{n_{\text{totals}}} \quad (\sum X_i = 1)\)</div>
+            <div><strong class="text-slate-800 block mb-0.5">Pressió Parcial:</strong> \(P_i = X_i \cdot P_T = \frac{n_i \cdot R \cdot T}{V}\)</div>
+            <div><strong class="text-slate-800 block mb-0.5">Volum:</strong> Tots els gasos ocupen tot el recipient \(V\).</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Quick Interactive Unit Converter -->
+      <div class="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-sm space-y-4">
+        <h3 class="font-bold text-sm text-slate-800 flex items-center">
+          <i class="fa-solid fa-arrow-right-arrow-left text-indigo-600 mr-2"></i>Eina de Conversió d'Unitats amb Factors
+        </h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Temp -->
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+            <span class="text-xs font-bold text-slate-700 block">Temperatura (ºC &harr; K)</span>
+            <div class="flex items-center space-x-2">
+              <input type="number" id="conv-celsius" placeholder="ºC" value="25" class="w-full px-2.5 py-1.5 text-xs font-mono rounded-xl border border-slate-300" oninput="convertTemp('c')">
+              <span class="text-xs text-slate-400">&harr;</span>
+              <input type="number" id="conv-kelvin" placeholder="K" value="298.15" class="w-full px-2.5 py-1.5 text-xs font-mono rounded-xl border border-slate-300" oninput="convertTemp('k')">
+            </div>
+            <span class="text-[11px] text-slate-500 block">\(T(\text{K}) = T(^\circ\text{C}) + 273{,}15\)</span>
+          </div>
+
+          <!-- Pressure -->
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+            <span class="text-xs font-bold text-slate-700 block">Pressió (mmHg &harr; atm)</span>
+            <div class="flex items-center space-x-2">
+              <input type="number" id="conv-mmhg" placeholder="mmHg" value="760" class="w-full px-2.5 py-1.5 text-xs font-mono rounded-xl border border-slate-300" oninput="convertPress('mm')">
+              <span class="text-xs text-slate-400">&harr;</span>
+              <input type="number" id="conv-atm" placeholder="atm" value="1" class="w-full px-2.5 py-1.5 text-xs font-mono rounded-xl border border-slate-300" oninput="convertPress('atm')">
+            </div>
+            <span class="text-[11px] text-slate-500 block">Factor: \(\frac{1\text{ atm}}{760\text{ mmHg}}\)</span>
+          </div>
+
+          <!-- Volume -->
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+            <span class="text-xs font-bold text-slate-700 block">Volum (mL / cm³ &harr; L / dm³)</span>
+            <div class="flex items-center space-x-2">
+              <input type="number" id="conv-ml" placeholder="mL" value="1000" class="w-full px-2.5 py-1.5 text-xs font-mono rounded-xl border border-slate-300" oninput="convertVol('ml')">
+              <span class="text-xs text-slate-400">&harr;</span>
+              <input type="number" id="conv-l" placeholder="L" value="1" class="w-full px-2.5 py-1.5 text-xs font-mono rounded-xl border border-slate-300" oninput="convertVol('l')">
+            </div>
+            <span class="text-[11px] text-slate-500 block">Factor: \(\frac{1\text{ L}}{1000\text{ mL}}\)</span>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- PIE DE PÁGINA (SOLO TEXTO DISCRETO SEGÚN LAS FUENTES DEL CUADERNO) -->
+    <!-- ================================================================= -->
+    <footer class="mt-auto pt-8 pb-4 text-center">
+      <p class="text-xs sm:text-sm text-slate-400 font-medium">
+        © 2026 Elena Ruiz Alfaro
+      </p>
+    </footer>
+
+  </div>
+
+  <!-- ================================================================= -->
+  <!-- JAVASCRIPT LOGIC & CONVERSION FACTORS IMPLEMENTATION               -->
+  <!-- ================================================================= -->
+  <script>
+    let currentLang = 'ca';
+    let currentTab = 'trainer';
+    let currentProblemCategory = 'all';
+    let scoreCount = 0;
+    let recordCount = 0;
+    let streakCount = 0;
+    let categoryCounts = { ideal: 0, transf: 0, dalton: 0, density: 0 };
+
+    let timerSeconds = 0;
+    let timerRunning = true;
+    let timerInterval = null;
+    let currentProblem = null;
+
+    const i18n = {
+      ca: {
+        score_label: "ENCIERTS:",
+        record_label: "RÉCORD:",
+        streak_label: "RATXA:",
+        timer_title: "TEMPS:",
+        student_label: "Alumne/a:",
+        badge_transf: "Transf:",
+        btn_pdf: "Generar PDF de Sessió",
+        nav_problems: "Entrenador de Problemes",
+        nav_theory: "Formulari & Apunts",
+        trainer_category: "Categoria de problema:",
+        cat_all: "Tots",
+        cat_ideal: "Gasos Ideals (PV=nRT)",
+        cat_transf: "Transformacions (Lleis i Eq. General)",
+        cat_dalton: "Llei de Dalton & Mescles",
+        cat_density: "Densitat & Volum Molar",
+        btn_new_problem: "Generar Nou Problema",
+        constants_label: "Dades útils:",
+        btn_check: "Comprovar",
+        sol_title: "Resolució Oficial amb Factors de Conversió",
+        sol_subtitle: "Criteris de correcció i justificació curricular (BAT_FQ / PBAU)"
+      },
+      es: {
+        score_label: "ACIERTOS:",
+        record_label: "RÉCORD:",
+        streak_label: "RACHA:",
+        timer_title: "TIEMPO:",
+        student_label: "Alumno/a:",
+        badge_transf: "Transf:",
+        btn_pdf: "Generar PDF de Sesión",
+        nav_problems: "Entrenador de Problemas",
+        nav_theory: "Formulario y Apuntes",
+        trainer_category: "Categoría de problema:",
+        cat_all: "Todos",
+        cat_ideal: "Gases Ideales (PV=nRT)",
+        cat_transf: "Transformaciones (Leyes y Ec. General)",
+        cat_dalton: "Ley de Dalton & Mezclas",
+        cat_density: "Densidad & Volumen Molar",
+        btn_new_problem: "Generar Nuevo Problema",
+        constants_label: "Datos útiles:",
+        btn_check: "Comprobar",
+        sol_title: "Resolución Oficial con Factores de Conversión",
+        sol_subtitle: "Criterios de corrección y justificación curricular (BAT_FQ / PBAU)"
+      }
+    };
+
+    function renderMath(container) {
+      if (!container) return;
+      if (window.renderMathInElement) {
+        renderMathInElement(container, {
+          delimiters: [
+            {left: '$$', right: '$$', display: true},
+            {left: '\\[', right: '\\]', display: true},
+            {left: '\\(', right: '\\)', display: false},
+            {left: '$', right: '$', display: false}
+          ],
+          throwOnError: false
+        });
+      }
+    }
+
+    function startTimer() {
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        if (timerRunning) {
+          timerSeconds++;
+          updateTimerDisplay();
+        }
+      }, 1000);
+    }
+
+    function toggleTimer() {
+      timerRunning = !timerRunning;
+      const icon = document.getElementById('timer-toggle-icon');
+      if (timerRunning) {
+        icon.className = 'fa-solid fa-pause text-xs';
+      } else {
+        icon.className = 'fa-solid fa-play text-xs';
+      }
+    }
+
+    function resetTimer() {
+      timerSeconds = 0;
+      updateTimerDisplay();
+    }
+
+    function updateTimerDisplay() {
+      const min = Math.floor(timerSeconds / 60).toString().padStart(2, '0');
+      const sec = (timerSeconds % 60).toString().padStart(2, '0');
+      document.getElementById('timer-display').textContent = `${min}:${sec}`;
+    }
+
+    function setLanguage(lang) {
+      currentLang = lang;
+      const btnCa = document.getElementById('btn-lang-ca');
+      const btnEs = document.getElementById('btn-lang-es');
+
+      if (lang === 'ca') {
+        btnCa.className = "px-3 py-1 rounded-full font-bold bg-white text-indigo-700 shadow-sm transition-all";
+        btnEs.className = "px-3 py-1 rounded-full font-semibold text-slate-500 hover:text-slate-800 transition-all";
+      } else {
+        btnEs.className = "px-3 py-1 rounded-full font-bold bg-white text-indigo-700 shadow-sm transition-all";
+        btnCa.className = "px-3 py-1 rounded-full font-semibold text-slate-500 hover:text-slate-800 transition-all";
+      }
+
+      const dict = i18n[currentLang];
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (dict[key]) el.textContent = dict[key];
+      });
+
+      if (currentProblem) renderProblem();
+      renderMath(document.body);
+    }
+
+    function switchTab(tabId) {
+      currentTab = tabId;
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+      document.querySelectorAll('.tab-nav-btn').forEach(b => {
+        b.className = "tab-nav-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all flex items-center space-x-2 bg-white border border-slate-200";
+      });
+
+      const activePanel = document.getElementById(`panel-${tabId}`);
+      if (activePanel) activePanel.classList.remove('hidden');
+
+      const activeBtn = document.getElementById(`nav-btn-${tabId}`);
+      if (activeBtn) {
+        activeBtn.className = "tab-nav-btn active px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center space-x-2 bg-indigo-600 text-white shadow-sm";
+      }
+
+      if (tabId === 'theory') {
+        renderMath(activePanel);
+      }
+    }
+
+    const problemBlueprints = [
+      // 1. Gasos Ideals - Incògnita: Volum (L)
+      {
+        type: 'ideal',
+        id: 'GAS-IDEAL-V',
+        title: 'PV=nRT: Càlcul del Volum',
+        create: () => {
+          const gases = [
+            { name: 'propà (C₃H₈)', M: 44 },
+            { name: 'butà (C₄H₁₀)', M: 58 },
+            { name: 'metà (CH₄)', M: 16 },
+            { name: 'dioxigen (O₂)', M: 32 }
+          ];
+          const gas = gases[Math.floor(Math.random() * gases.length)];
+          const massKg = (Math.random() * 4 + 2).toFixed(1);
+          const massG = massKg * 1000;
+          const tempC = Math.floor(Math.random() * 30 + 15);
+          const tempK = tempC + 273;
+          const pressAtm = (Math.random() * 1.5 + 1.0).toFixed(2);
+          const moles = massG / gas.M;
+          const expectedV = (moles * 0.082 * tempK) / pressAtm;
+
+          return {
+            category: 'ideal',
+            text_ca: `Una bombona conté <strong>${massKg} kg</strong> de <strong>${gas.name}</strong>. Calculeu el <strong>volum en litres (L)</strong> que ocuparia aquest gas a una temperatura de <strong>${tempC} ºC</strong> i sotmès a una pressió de <strong>${pressAtm} atm</strong>.`,
+            text_es: `Una bombona contiene <strong>${massKg} kg</strong> de <strong>${gas.name}</strong>. Calcula el <strong>volumen en litros (L)</strong> que ocuparía este gas a una temperatura de <strong>${tempC} ºC</strong> y sometido a una presión de <strong>${pressAtm} atm</strong>.`,
+            atomic_masses: `Massa molar ${gas.name} = ${gas.M} g/mol; R = 0,082 atm·L/(mol·K)`,
+            question_ca: `Volum del gas en Litres (L):`,
+            question_es: `Volumen del gas en Litros (L):`,
+            unit: 'L',
+            expected: expectedV,
+            tolerance: 0.03,
+            hint_ca: `1) Aplica el factor de conversió de kg a g. 2) Converteix grams a mols amb la massa molar com a factor de conversió. 3) Suma 273 per a la temperatura en K i aïlla V de PV = nRT.`,
+            hint_es: `1) Aplica el factor de conversión de kg a g. 2) Convierte gramos a moles con la masa molar como factor de conversión. 3) Suma 273 para la temperatura en K y despeja V de PV = nRT.`,
+            steps_ca: [
+              {
+                title: "Pas 1: Conversió de massa i temperatura amb factors de conversió",
+                tag: "Factor de conversió",
+                color: "blue",
+                content: `Passem la massa a grams aplicant el factor d'unitat corresponent:<br>
+                          \\[m = ${massKg}\\text{ kg} \\cdot \\frac{1000\\text{ g}}{1\\text{ kg}} = ${massG}\\text{ g}\\]
+                          Convertim la temperatura a escala absoluta: \\(T = ${tempC}^\\circ\\text{C} + 273 = ${tempK}\\text{ K}\\).`
+              },
+              {
+                title: "Pas 2: Càlcul de la quantitat de substància (mols)",
+                tag: "Factor de conversió",
+                color: "indigo",
+                content: `Utilitzem la massa molar com a factor de conversió unitari:<br>
+                          \\[n = ${massG}\\text{ g de } ${gas.name} \\cdot \\frac{1\\text{ mol de } ${gas.name}}{${gas.M}\\text{ g de } ${gas.name}} = \\mathbf{${moles.toFixed(3)}\\text{ mols}}\\]`
+              },
+              {
+                title: "Pas 3: Aïllament i càlcul del volum amb PV=nRT",
+                tag: "PV=nRT",
+                color: "emerald",
+                content: `Aïllem el volum \\(V\\) de l'equació general dels gasos ideals:<br>
+                          \\[V = \\frac{n \\cdot R \\cdot T}{P} = \\frac{${moles.toFixed(3)}\\text{ mol} \\cdot 0{,}082\\frac{\\text{atm}\\cdot\\text{L}}{\\text{mol}\\cdot\\text{K}} \\cdot ${tempK}\\text{ K}}{${pressAtm}\\text{ atm}} = \\mathbf{${expectedV.toFixed(1)}\\text{ L}}\\]`
+              }
+            ],
+            steps_es: [
+              {
+                title: "Paso 1: Conversión de masa y temperatura con factores de conversión",
+                tag: "Factor de conversión",
+                color: "blue",
+                content: `Convertimos la masa a gramos mediante el factor unitario:<br>
+                          \\[m = ${massKg}\\text{ kg} \\cdot \\frac{1000\\text{ g}}{1\\text{ kg}} = ${massG}\\text{ g}\\]
+                          Temperatura absoluta: \\(T = ${tempC}^\\circ\\text{C} + 273 = ${tempK}\\text{ K}\\).`
+              },
+              {
+                title: "Paso 2: Cantidad de sustancia (moles) con factor de conversión",
+                tag: "Factor de conversión",
+                color: "indigo",
+                content: `Aplicamos la masa molar como factor de conversión unitario:<br>
+                          \\[n = ${massG}\\text{ g} \\cdot \\frac{1\\text{ mol}}{${gas.M}\\text{ g}} = \\mathbf{${moles.toFixed(3)}\\text{ moles}}\\]`
+              },
+              {
+                title: "Paso 3: Despeje y cálculo del volumen con PV=nRT",
+                tag: "PV=nRT",
+                color: "emerald",
+                content: `Despejamos el volumen \\(V\\) de la ecuación fundamental:<br>
+                          \\[V = \\frac{n \\cdot R \\cdot T}{P} = \\frac{${moles.toFixed(3)} \\cdot 0{,}082 \\cdot ${tempK}}{${pressAtm}} = \\mathbf{${expectedV.toFixed(1)}\\text{ L}}\\]`
+              }
+            ]
+          };
+        }
+      },
+
+      // 2. Gasos Ideals - Incògnita: Pressió (atm) a partir de grams
+      {
+        type: 'ideal',
+        id: 'GAS-IDEAL-P',
+        title: 'PV=nRT: Càlcul de Pressió',
+        create: () => {
+          const gases = [
+            { name: 'diòxid de nitrogen (NO₂)', M: 46 },
+            { name: 'monòxid de carboni (CO)', M: 28 },
+            { name: 'oxigen (O₂)', M: 32 }
+          ];
+          const gas = gases[Math.floor(Math.random() * gases.length)];
+          const massG = Math.floor(Math.random() * 40 + 20);
+          const volL = Math.floor(Math.random() * 15 + 10);
+          const tempC = Math.floor(Math.random() * 50 + 20);
+          const tempK = tempC + 273;
+          const moles = massG / gas.M;
+          const expectedP = (moles * 0.082 * tempK) / volL;
+
+          return {
+            category: 'ideal',
+            text_ca: `S'introdueixen <strong>${massG} g</strong> de <strong>${gas.name}</strong> en un recipient rígid de <strong>${volL} L</strong> a una temperatura de <strong>${tempC} ºC</strong>.<br>Calculeu la <strong>pressió (en atm)</strong> que exercirà el gas a les parets del recipient.`,
+            text_es: `Se introducen <strong>${massG} g</strong> de <strong>${gas.name}</strong> en un recipiente rígido de <strong>${volL} L</strong> a una temperatura de <strong>${tempC} ºC</strong>.<br>Calcula la <strong>presión (en atm)</strong> que ejercerá el gas en las paredes del recipiente.`,
+            atomic_masses: `Massa molar ${gas.name} = ${gas.M} g/mol; R = 0,082 atm·L/(mol·K)`,
+            question_ca: `Pressió exercida pel gas (atm):`,
+            question_es: `Presión ejercida por el gas (atm):`,
+            unit: 'atm',
+            expected: expectedP,
+            tolerance: 0.03,
+            hint_ca: `Aplica un factor de conversió amb la massa molar per obtenir els mols i passa la temperatura a Kelvin. Després aïlla P de PV=nRT.`,
+            hint_es: `Aplica un factor de conversión con la masa molar para obtener los moles y pasa la temperatura a Kelvin. Después despeja P de PV=nRT.`,
+            steps_ca: [
+              {
+                title: "Pas 1: Mols de gas mitjançant factor de conversió",
+                tag: "Factor de conversió",
+                color: "blue",
+                content: `Convertim els grams de ${gas.name} a mols amb la massa molar:<br>
+                          \\[n = ${massG}\\text{ g} \\cdot \\frac{1\\text{ mol}}{${gas.M}\\text{ g}} = \\mathbf{${moles.toFixed(3)}\\text{ mols}}\\]
+                          Temperatura absoluta: \\(T = ${tempC} + 273 = ${tempK}\\text{ K}\\).`
+              },
+              {
+                title: "Pas 2: Aïllament algebraic de la pressió",
+                tag: "PV=nRT",
+                color: "emerald",
+                content: `Aïllem \\(P\\) de l'equació fonamental dels gasos ideals:<br>
+                          \\[P = \\frac{n \\cdot R \\cdot T}{V} = \\frac{${moles.toFixed(3)}\\text{ mol} \\cdot 0{,}082\\frac{\\text{atm}\\cdot\\text{L}}{\\text{mol}\\cdot\\text{K}} \\cdot ${tempK}\\text{ K}}{${volL}\\text{ L}} = \\mathbf{${expectedP.toFixed(2)}\\text{ atm}}\\]`
+              }
+            ],
+            steps_es: [
+              {
+                title: "Paso 1: Moles de gas con factor de conversión",
+                tag: "Factor de conversión",
+                color: "blue",
+                content: `Convertimos los gramos a moles mediante la masa molar:<br>
+                          \\[n = ${massG}\\text{ g} \\cdot \\frac{1\\text{ mol}}{${gas.M}\\text{ g}} = \\mathbf{${moles.toFixed(3)}\\text{ moles}}\\]
+                          Temperatura absoluta: \\(T = ${tempC} + 273 = ${tempK}\\text{ K}\\).`
+              },
+              {
+                title: "Paso 2: Despeje y cálculo de la presión",
+                tag: "PV=nRT",
+                color: "emerald",
+                content: `Despejamos \\(P\\) de la ecuación de los gases ideales:<br>
+                          \\[P = \\frac{n \\cdot R \\cdot T}{V} = \\frac{${moles.toFixed(3)} \\cdot 0{,}082 \\cdot ${tempK}}{${volL}} = \\mathbf{${expectedP.toFixed(2)}\\text{ atm}}\\]`
+              }
+            ]
+          };
+        }
+      },
+
+      // 2b. Gasos Ideals - Incògnita: Nombre de mols (n)
+      {
+        type: 'ideal',
+        id: 'GAS-IDEAL-N',
+        title: 'PV=nRT: Càlcul del Nombre de Mols (n)',
+        create: () => {
+          const volL = (Math.random() * 8 + 3).toFixed(1);
+          const tempC = Math.floor(Math.random() * 30 + 15);
+          const tempK = tempC + 273;
+          // Pressure in mmHg to reinforce conversion factors (e.g. 700 - 1200 mmHg)
+          const pressMmHg = Math.floor(Math.random() * 500 + 700);
+          const pressAtm = pressMmHg / 760;
+          const expectedMoles = (pressAtm * volL) / (0.082 * tempK);
+
+          return {
+            category: 'ideal',
+            text_ca: `Una certa quantitat de gas a <strong>${tempC} ºC</strong> ocupa un volum de <strong>${volL} L</strong> a una pressió de <strong>${pressMmHg} mmHg</strong>.<br>Calculeu el <strong>nombre de mols (n)</strong> de gas contingut al recipient.`,
+            text_es: `Una cierta cantidad de gas a <strong>${tempC} ºC</strong> ocupa un volumen de <strong>${volL} L</strong> a una presión de <strong>${pressMmHg} mmHg</strong>.<br>Calcula el <strong>número de moles (n)</strong> de gas contenido en el recipiente.`,
+            atomic_masses: `R = 0,082 atm·L/(mol·K); 1 atm = 760 mmHg`,
+            question_ca: `Quantitat de substància en mols (mol):`,
+            question_es: `Cantidad de sustancia en moles (mol):`,
+            unit: 'mol',
+            expected: expectedMoles,
+            tolerance: 0.03,
+            hint_ca: `1) Aplica el factor de conversió per passar mmHg a atm: (1 atm / 760 mmHg). 2) Converteix la temperatura a Kelvin sumant 273. 3) Aïlla n de PV=nRT: n = (P · V) / (R · T).`,
+            hint_es: `1) Aplica el factor de conversión para pasar mmHg a atm: (1 atm / 760 mmHg). 2) Convierte la temperatura a Kelvin sumando 273. 3) Despeja n de PV=nRT: n = (P · V) / (R · T).`,
+            steps_ca: [
+              {
+                title: "Pas 1: Conversió de pressió i temperatura amb factors de conversió",
+                tag: "Factor de conversió",
+                color: "blue",
+                content: `Passem la pressió de mmHg a atmosferes mitjançant el <strong>factor de conversió</strong>:<br>
+                          \\[P = ${pressMmHg}\\text{ mmHg} \\cdot \\frac{1\\text{ atm}}{760\\text{ mmHg}} = \\mathbf{${pressAtm.toFixed(3)}\\text{ atm}}\\]
+                          Convertim la temperatura a Kelvin (escala absoluta):<br>
+                          \\[T = ${tempC}^\\circ\\text{C} + 273 = \\mathbf{${tempK}\\text{ K}}\\]`
+              },
+              {
+                title: "Pas 2: Aïllament i càlcul del nombre de mols (n)",
+                tag: "PV=nRT",
+                color: "emerald",
+                content: `Aïllem el nombre de mols \\(n\\) de l'equació fonamental dels gasos ideals \\(P \\cdot V = n \\cdot R \\cdot T\\):<br>
+                          \\[n = \\frac{P \\cdot V}{R \\cdot T} = \\frac{${pressAtm.toFixed(3)}\\text{ atm} \\cdot ${volL}\\text{ L}}{0{,}082\\frac{\\text{atm}\\cdot\\text{L}}{\\text{mol}\\cdot\\text{K}} \\cdot ${tempK}\\text{ K}} = \\mathbf{${expectedMoles.toFixed(3)}\\text{ mols}}\\]`
+              }
+            ],
+            steps_es: [
+              {
+                title: "Paso 1: Conversión de presión y temperatura con factores de conversión",
+                tag: "Factor de conversión",
+                color: "blue",
+                content: `Convertimos la presión a atmósferas mediante el <strong>factor de conversión</strong>:<br>
+                          \\[P = ${pressMmHg}\\text{ mmHg} \\cdot \\frac{1\\text{ atm}}{760\\text{ mmHg}} = \\mathbf{${pressAtm.toFixed(3)}\\text{ atm}}\\]
+                          Temperatura absoluta:<br>
+                          \\[T = ${tempC}^\\circ\\text{C} + 273 = \\mathbf{${tempK}\\text{ K}}\\]`
+              },
+              {
+                title: "Paso 2: Despeje y cálculo del número de moles (n)",
+                tag: "PV=nRT",
+                color: "emerald",
+                content: `Despejamos el número de moles \\(n\\) de la ecuación fundamental \\(P \\cdot V = n \\cdot R \\cdot T\\):<br>
+                          \\[n = \\frac{P \\cdot V}{R \\cdot T} = \\frac{${pressAtm.toFixed(3)}\\text{ atm} \\cdot ${volL}\\text{ L}}{0{,}082 \\cdot ${tempK}\\text{ K}} = \\mathbf{${expectedMoles.toFixed(3)}\\text{ moles}}\\]`
+              }
+            ]
+          };
+        }
+      },
+
+      // 2c. Gasos Ideals - Incògnita: Temperatura (T en Kelvin)
+      {
+        type: 'ideal',
+        id: 'GAS-IDEAL-T',
+        title: 'PV=nRT: Càlcul de Temperatura (K)',
+        create: () => {
+          const gases = [
+            { name: 'dioxigen (O₂)', M: 32 },
+            { name: 'dinitrogen (N₂)', M: 28 },
+            { name: 'metà (CH₄)', M: 16 }
+          ];
+          const gas = gases[Math.floor(Math.random() * gases.length)];
+          const volL = Math.floor(Math.random() * 12 + 6); // 6 - 18 L
+          const pressAtm = (Math.random() * 1.2 + 0.8).toFixed(2); // 0.8 - 2.0 atm
+          const massG = Math.floor(Math.random() * 25 + 10); // 10 - 35 g
+          const moles = massG / gas.M;
+          const expectedT = (pressAtm * volL) / (moles * 0.082);
+          const expectedTCelsius = expectedT - 273;
+
+          return {
+            category: 'ideal',
+            text_ca: `En un recipient rígid de <strong>${volL} L</strong> hi ha <strong>${massG} g</strong> de <strong>${gas.name}</strong> a una pressió de <strong>${pressAtm} atm</strong>.<br>Calculeu la <strong>temperatura (en Kelvin, K)</strong> a l'interior del recipient.`,
+            text_es: `En un recipiente rígido de <strong>${volL} L</strong> hay <strong>${massG} g</strong> de <strong>${gas.name}</strong> a una presión de <strong>${pressAtm} atm</strong>.<br>Calcula la <strong>temperatura (en Kelvin, K)</strong> en el interior del recipiente.`,
+            atomic_masses: `M(${gas.name}) = ${gas.M} g/mol; R = 0,082 atm·L/(mol·K)`,
+            question_ca: `Temperatura absoluta del gas (K):`,
+            question_es: `Temperatura absoluta del gas (K):`,
+            unit: 'K',
+            expected: expectedT,
+            tolerance: 0.03,
+            hint_ca: `1) Aplica el factor de conversió de la massa molar per obtenir els mols: n = g · (1 mol / M g). 2) Aïlla la temperatura T de PV=nRT: T = (P · V) / (n · R). El resultat s'obté directament en Kelvin.`,
+            hint_es: `1) Aplica el factor de conversión de la masa molar para obtener los moles: n = g · (1 mol / M g). 2) Despeja la temperatura T de PV=nRT: T = (P · V) / (n · R). El resultado se obtiene directamente en Kelvin.`,
+            steps_ca: [
+              {
+                title: "Pas 1: Conversió de massa a mols mitjançant factor de conversió",
+                tag: "Factor de conversió",
+                color: "blue",
+                content: `Determinem la quantitat de substància emprant la massa molar com a <strong>factor de conversió</strong>:<br>
+                          \\[n = ${massG}\\text{ g de } ${gas.name} \\cdot \\frac{1\\text{ mol de } ${gas.name}}{${gas.M}\\text{ g de } ${gas.name}} = \\mathbf{${moles.toFixed(3)}\\text{ mols}}\\]`
+              },
+              {
+                title: "Pas 2: Aïllament algebraic i càlcul de la temperatura absoluta (T)",
+                tag: "PV=nRT",
+                color: "emerald",
+                content: `Aïllem \\(T\\) de l'equació d'estat dels gasos ideals \\(P \\cdot V = n \\cdot R \\cdot T\\):<br>
+                          \\[T = \\frac{P \\cdot V}{n \\cdot R} = \\frac{${pressAtm}\\text{ atm} \\cdot ${volL}\\text{ L}}{${moles.toFixed(3)}\\text{ mol} \\cdot 0{,}082\\frac{\\text{atm}\\cdot\\text{L}}{\\text{mol}\\cdot\\text{K}}} = \\mathbf{${expectedT.toFixed(1)}\\text{ K}}\\]
+                          <div class="mt-2 text-xs text-slate-500 bg-white p-2.5 rounded-xl border border-slate-200">
+                            <strong>Equivalència en graus Celsius:</strong> \\(T(^\circ\\text{C}) = ${expectedT.toFixed(1)} - 273 = ${expectedTCelsius.toFixed(1)}^\circ\\text{C}\\).
+                          </div>`
+              }
+            ],
+            steps_es: [
+              {
+                title: "Paso 1: Conversión de masa a moles con factor de conversión",
+                tag: "Factor de conversión",
+                color: "blue",
+                content: `Calculamos la cantidad de sustancia mediante la masa molar como <strong>factor de conversión</strong>:<br>
+                          \\[n = ${massG}\\text{ g} \\cdot \\frac{1\\text{ mol}}{${gas.M}\\text{ g}} = \\mathbf{${moles.toFixed(3)}\\text{ moles}}\\]`
+              },
+              {
+                title: "Paso 2: Despeje y cálculo de la temperatura absoluta (T)",
+                tag: "PV=nRT",
+                color: "emerald",
+                content: `Despejamos \\(T\\) de la ecuación fundamental \\(P \\cdot V = n \\cdot R \\cdot T\\):<br>
+                          \\[T = \\frac{P \\cdot V}{n \\cdot R} = \\frac{${pressAtm}\\text{ atm} \\cdot ${volL}\\text{ L}}{${moles.toFixed(3)} \\cdot 0{,}082} = \\mathbf{${expectedT.toFixed(1)}\\text{ K}}\\]
+                          <div class="mt-2 text-xs text-slate-500 bg-white p-2.5 rounded-xl border border-slate-200">
+                            <strong>Equivalencia en grados Celsius:</strong> \\(T(^\circ\\text{C}) = ${expectedT.toFixed(1)} - 273 = ${expectedTCelsius.toFixed(1)}^\circ\\text{C}\\).
+                          </div>`
+              }
+            ]
+          };
+        }
+      },
+
+      // 3. Transformacions: Llei de Boyle (T = constant) - Incògnita: V₂ (L)
+      {
+        type: 'transf',
+        id: 'GAS-BOYLE',
+        title: 'Llei de Boyle-Mariotte (Procés Isotèrmic)',
+        create: () => {
+          const P1 = (Math.random() * 1.5 + 1.0).toFixed(2);
+          const V1 = (Math.random() * 8 + 4).toFixed(1);
+          const P2 = (parseFloat(P1) + Math.random() * 1.5 + 0.8).toFixed(2);
+          const expectedV2 = (P1 * V1) / P2;
+
+          return {
+            category: 'transf',
+            text_ca: `Una massa de gas a temperatura constant ocupa un volum inicial de <strong>${V1} L</strong> a una pressió de <strong>${P1} atm</strong>.<br>Si augmentem la pressió fins a <strong>${P2} atm</strong> mantenint la temperatura invariable, quin <strong>volum en litres (L)</strong> passarà a ocupar?`,
+            text_es: `Una masa de gas a temperatura constante ocupa un volumen inicial de <strong>${V1} L</strong> a una presión de <strong>${P1} atm</strong>.<br>Si aumentamos la presión hasta <strong>${P2} atm</strong> manteniendo la temperatura invariable, ¿qué <strong>volumen en litros (L)</strong> pasará a ocupar?`,
+            atomic_masses: `Procés isotèrmic (T = constant): P₁ · V₁ = P₂ · V₂`,
+            question_ca: `Volum final del gas V₂ (L):`,
+            question_es: `Volumen final del gas V₂ (L):`,
+            unit: 'L',
+            expected: expectedV2,
+            tolerance: 0.03,
+            hint_ca: `A temperatura constant s'aplica la Llei de Boyle-Mariotte: P₁ · V₁ = P₂ · V₂. Aïlla directament V₂ = (P₁ · V₁) / P₂.`,
+            hint_es: `A temperatura constante se aplica la Ley de Boyle-Mariotte: P₁ · V₁ = P₂ · V₂. Despeja directamente V₂ = (P₁ · V₁) / P₂.`,
+            steps_ca: [
+              {
+                title: "Pas 1: Identificació del procés i llei física aplicable",
+                tag: "Llei de Boyle",
+                color: "blue",
+                content: `Com que la quantitat de gas i la temperatura romanen constants (\\(T = \\text{constant}\\)), el gas compleix la llei de Boyle-Mariotte:<br>
+                          \\[P_1 \\cdot V_1 = P_2 \\cdot V_2\\]`
+              },
+              {
+                title: "Pas 2: Aïllament algebraic i factor de proporció de pressió",
+                tag: "Factor de conversió",
+                color: "emerald",
+                content: `Aïllem el volum final \\(V_2\\). Observem que la pressió actua com a factor de compressió sobre el volum inicial:<br>
+                          \\[V_2 = V_1 \\cdot \\frac{P_1}{P_2} = ${V1}\\text{ L} \\cdot \\frac{${P1}\\text{ atm}}{${P2}\\text{ atm}} = \\mathbf{${expectedV2.toFixed(2)}\\text{ L}}\\]
+                          <div class="mt-2 text-xs text-slate-500 bg-white p-2.5 rounded-xl border border-slate-200">
+                            <strong>Comprovació física:</strong> Com que la pressió ha augmentat (\\(P_2 > P_1\\)), el volum s'ha reduït necessàriament (\\(V_2 < V_1\\)).
+                          </div>`
+              }
+            ],
+            steps_es: [
+              {
+                title: "Paso 1: Identificación del proceso físico",
+                tag: "Ley de Boyle",
+                color: "blue",
+                content: `Al ser un proceso isotérmico con cantidad constante de gas, rige la ley de Boyle-Mariotte:<br>
+                          \\[P_1 \\cdot V_1 = P_2 \\cdot V_2\\]`
+              },
+              {
+                title: "Paso 2: Despeje y cálculo con factor de proporción de presiones",
+                tag: "Factor de conversión",
+                color: "emerald",
+                content: `Despejamos el volumen final \\(V_2\\):<br>
+                          \\[V_2 = V_1 \\cdot \\frac{P_1}{P_2} = ${V1}\\text{ L} \\cdot \\frac{${P1}\\text{ atm}}{${P2}\\text{ atm}} = \\mathbf{${expectedV2.toFixed(2)}\\text{ L}}\\]`
+              }
+            ]
+          };
+        }
+      },
+
+      // 4. Transformacions: Equació General (Canvi simultani P, V, T) - Incògnita: V₂ (L)
+      {
+        type: 'transf',
+        id: 'GAS-GENERAL',
+        title: 'Equació General dels Gasos: Canvi d’Estat',
+        create: () => {
+          const P1 = (Math.random() * 0.8 + 0.9).toFixed(2);
+          const V1 = Math.floor(Math.random() * 10 + 5);
+          const T1_C = Math.floor(Math.random() * 25 + 15);
+          const T1_K = T1_C + 273;
+
+          const P2 = (parseFloat(P1) + Math.random() * 1.2 + 0.5).toFixed(2);
+          const T2_C = Math.floor(Math.random() * 60 + 50);
+          const T2_K = T2_C + 273;
+
+          const expectedV2 = (P1 * V1 * T2_K) / (T1_K * P2);
+
+          return {
+            category: 'transf',
+            text_ca: `Una certa quantitat de gas es troba inicialment a <strong>${P1} atm</strong> de pressió, ocupant <strong>${V1} L</strong> a una temperatura de <strong>${T1_C} ºC</strong>.<br>Si s'escalfa fins a <strong>${T2_C} ºC</strong> i la pressió augmenta fins a <strong>${P2} atm</strong>, quin serà el <strong>volum final en litres (L)</strong>?`,
+            text_es: `Una cierta cantidad de gas se encuentra inicialmente a <strong>${P1} atm</strong> de presión, ocupando <strong>${V1} L</strong> a una temperatura de <strong>${T1_C} ºC</strong>.<br>Si se calienta hasta <strong>${T2_C} ºC</strong> y la presión aumenta hasta <strong>${P2} atm</strong>, ¿cuál será el <strong>volumen final en litros (L)</strong>?`,
+            atomic_masses: `Equació General: (P₁ · V₁) / T₁ = (P₂ · V₂) / T₂`,
+            question_ca: `Volum final V₂ en Litres (L):`,
+            question_es: `Volumen final V₂ en Litros (L):`,
+            unit: 'L',
+            expected: expectedV2,
+            tolerance: 0.03,
+            hint_ca: `Suma 273 a ambdues temperatures per tenir-les en Kelvin. Després aplica l'equació general (P₁ · V₁)/T₁ = (P₂ · V₂)/T₂ i aïlla V₂.`,
+            hint_es: `Suma 273 a ambas temperaturas para tenerlas en Kelvin. Después aplica la ecuación general (P₁ · V₁)/T₁ = (P₂ · V₂)/T₂ y despeja V₂.`,
+            steps_ca: [
+              {
+                title: "Pas 1: Conversió de les temperatures a l'escala absoluta (K)",
+                tag: "Temperatura",
+                color: "blue",
+                content: `Passem ambdues temperatures a Kelvin:<br>
+                          \\[T_1 = ${T1_C}^\\circ\\text{C} + 273 = ${T1_K}\\text{ K}\\]
+                          \\[T_2 = ${T2_C}^\\circ\\text{C} + 273 = ${T2_K}\\text{ K}\\]`
+              },
+              {
+                title: "Pas 2: Aplicació de l'Equació General dels gasos ideals",
+                tag: "Equació General",
+                color: "indigo",
+                content: `La relació entre els dos estats d'una mateixa quantitat de gas és:<br>
+                          \\[\\frac{P_1 \\cdot V_1}{T_1} = \\frac{P_2 \\cdot V_2}{T_2}\\]`
+              },
+              {
+                title: "Pas 3: Aïllament algebraic i càlcul del volum final",
+                tag: "Factor de conversió",
+                color: "emerald",
+                content: `Aïllem \\(V_2\\) aplicant simultàniament els factors de pressió i de temperatura:<br>
+                          \\[V_2 = V_1 \\cdot \\frac{P_1}{P_2} \\cdot \\frac{T_2}{T_1} = ${V1}\\text{ L} \\cdot \\frac{${P1}\\text{ atm}}{${P2}\\text{ atm}} \\cdot \\frac{${T2_K}\\text{ K}}{${T1_K}\\text{ K}} = \\mathbf{${expectedV2.toFixed(2)}\\text{ L}}\\]`
+              }
+            ],
+            steps_es: [
+              {
+                title: "Paso 1: Conversión de temperaturas a Kelvin",
+                tag: "Temperatura",
+                color: "blue",
+                content: `Transformamos a escala absoluta:<br>
+                          \\[T_1 = ${T1_C} + 273 = ${T1_K}\\text{ K}, \\quad T_2 = ${T2_C} + 273 = ${T2_K}\\text{ K}\\]`
+              },
+              {
+                title: "Paso 2: Ecuación General de los gases ideales",
+                tag: "Ecuación General",
+                color: "indigo",
+                content: `Relacionamos ambos estados:<br>
+                          \\[\\frac{P_1 \\cdot V_1}{T_1} = \\frac{P_2 \\cdot V_2}{T_2}\\]`
+              },
+              {
+                title: "Paso 3: Despeje y cálculo del volumen final",
+                tag: "Factor de conversión",
+                color: "emerald",
+                content: `Despejamos \\(V_2\\) con los factores correspondientes:<br>
+                          \\[V_2 = V_1 \\cdot \\frac{P_1}{P_2} \\cdot \\frac{T_2}{T_1} = ${V1} \\cdot \\frac{${P1}}{${P2}} \\cdot \\frac{${T2_K}}{${T1_K}} = \\mathbf{${expectedV2.toFixed(2)}\\text{ L}}\\]`
+              }
+            ]
+          };
+        }
+      },
+
+      // 5. Llei de Dalton: Mescla de 2 gasos - Incògnita: Pressió Total (atm)
+      {
+        type: 'dalton',
+        id: 'GAS-DALTON-2G',
+        title: 'Llei de Dalton: Mescla de dos gasos (g a mols)',
+        create: () => {
+          const V = Math.floor(Math.random() * 15 + 10);
+          const T_K = Math.floor(Math.random() * 150 + 350);
+          const g_CO2 = Math.floor(Math.random() * 25 + 20);
+          const g_CO = Math.floor(Math.random() * 15 + 10);
+
+          const n_CO2 = g_CO2 / 44;
+          const n_CO = g_CO / 28;
+          const n_total = n_CO2 + n_CO;
+          const x_CO2 = n_CO2 / n_total;
+          const P_total = (n_total * 0.082 * T_K) / V;
+
+          return {
+            category: 'dalton',
+            text_ca: `S'introdueix en un recipient de <strong>${V} L</strong> una mescla formada per <strong>${g_CO2} g de CO₂</strong> i <strong>${g_CO} g de CO</strong> a <strong>${T_K} K</strong>.<br>Calculeu la <strong>pressió total (atm)</strong> que s'assoleix a l'interior del recipient.`,
+            text_es: `Se introduce en un recipiente de <strong>${V} L</strong> una mezcla formada por <strong>${g_CO2} g de CO₂</strong> y <strong>${g_CO} g de CO</strong> a <strong>${T_K} K</strong>.<br>Calcula la <strong>presión total (atm)</strong> que se alcanza en el interior del recipiente.`,
+            atomic_masses: `M(CO₂)=44 g/mol; M(CO)=28 g/mol; R=0,082 atm·L/(mol·K)`,
+            question_ca: `Pressió total del recipient (atm):`,
+            question_es: `Presión total del recipiente (atm):`,
+            unit: 'atm',
+            expected: P_total,
+            tolerance: 0.03,
+            hint_ca: `Aplica factors de conversió per transformar cada massa en grams a mols usant la massa molar. Després suma els mols totals i calcula P_T amb PV=nRT.`,
+            hint_es: `Aplica factores de conversión para transformar cada masa en gramos a moles usando la masa molar. Después suma los moles totales y calcula P_T con PV=nRT.`,
+            steps_ca: [
+              {
+                title: "Pas 1: Càlcul dels mols de cada component mitjançant factors de conversió",
+                tag: "Factor de conversió",
+                color: "blue",
+                content: `Convertim els grams de cada gas a quantitat de substància amb les respectives masses molars com a factors de conversió:<br>
+                          • Per al diòxid de carboni (\\(M_{\\text{CO}_2} = 44\\text{ g/mol}\\)):<br>
+                          \\[n_{\\text{CO}_2} = ${g_CO2}\\text{ g CO}_2 \\cdot \\frac{1\\text{ mol CO}_2}{44\\text{ g CO}_2} = \\mathbf{${n_CO2.toFixed(3)}\\text{ mols CO}_2}\\]
+                          • Per al monòxid de carboni (\\(M_{\\text{CO}} = 28\\text{ g/mol}\\)):<br>
+                          \\[n_{\\text{CO}} = ${g_CO}\\text{ g CO} \\cdot \\frac{1\\text{ mol CO}}{28\\text{ g CO}} = \\mathbf{${n_CO.toFixed(3)}\\text{ mols CO}}\\]`
+              },
+              {
+                title: "Pas 2: Nombre total de mols de la mescla",
+                tag: "Mols totals",
+                color: "indigo",
+                content: `Sumem els mols dels dos components:<br>
+                          \\[n_{\\text{totals}} = n_{\\text{CO}_2} + n_{\\text{CO}} = ${n_CO2.toFixed(3)} + ${n_CO.toFixed(3)} = \\mathbf{${n_total.toFixed(3)}\\text{ mols}}\\]`
+              },
+              {
+                title: "Pas 3: Càlcul de la pressió total segons la Llei de Dalton",
+                tag: "Llei de Dalton",
+                color: "emerald",
+                content: `Apliquem l'equació dels gasos ideals als mols totals en el recipient:<br>
+                          \\[P_T = \\frac{n_{\\text{totals}} \\cdot R \\cdot T}{V} = \\frac{${n_total.toFixed(3)}\\text{ mol} \\cdot 0{,}082 \\cdot ${T_K}\\text{ K}}{${V}\\text{ L}} = \\mathbf{${P_total.toFixed(2)}\\text{ atm}}\\]`
+              }
+            ],
+            steps_es: [
+              {
+                title: "Paso 1: Cálculo de los moles de cada gas con factores de conversión",
+                tag: "Factor de conversión",
+                color: "blue",
+                content: `Convertimos la masa de cada gas a moles empleando su masa molar como factor de conversión:<br>
+                          \\[n_{\\text{CO}_2} = ${g_CO2}\\text{ g} \\cdot \\frac{1\\text{ mol}}{44\\text{ g}} = \\mathbf{${n_CO2.toFixed(3)}\\text{ moles}}\\]
+                          \\[n_{\\text{CO}} = ${g_CO}\\text{ g} \\cdot \\frac{1\\text{ mol}}{28\\text{ g}} = \\mathbf{${n_CO.toFixed(3)}\\text{ moles}}\\]`
+              },
+              {
+                title: "Paso 2: Moles totales de la mezcla",
+                tag: "Moles totales",
+                color: "indigo",
+                content: `Sumamos las cantidades de materia:<br>
+                          \\[n_{\\text{totales}} = ${n_CO2.toFixed(3)} + ${n_CO.toFixed(3)} = \\mathbf{${n_total.toFixed(3)}\\text{ moles}}\\]`
+              },
+              {
+                title: "Paso 3: Presión total según la Ley de Dalton",
+                tag: "Ley de Dalton",
+                color: "emerald",
+                content: `Calculamos la presión total de la mezcla:<br>
+                          \\[P_T = \\frac{n_{\\text{totales}} \\cdot R \\cdot T}{V} = \\frac{${n_total.toFixed(3)} \\cdot 0{,}082 \\cdot ${T_K}}{${V}} = \\mathbf{${P_total.toFixed(2)}\\text{ atm}}\\]`
+              }
+            ]
+          };
+        }
+      },
+
+      // 6. Llei de Dalton: Mescla de 3 gasos (Exercici 12 dels Apunts BAT_FQ: NO₂, H₂, O₂)
+      // Incògnita variable: a vegades Pressió Total (P_T), a vegades Fracció Molar (X_i), a vegades Pressió Parcial (P_i)
+      {
+        type: 'dalton',
+        id: 'GAS-DALTON-3G',
+        title: 'Llei de Dalton: Mescla de 3 gasos (NO₂, H₂, O₂)',
+        create: () => {
+          const V = (Math.random() * 3 + 5).toFixed(1); // 5.0 - 8.0 L
+          const T_K = Math.floor(Math.random() * 80 + 380); // 380 - 460 K
+          const g_NO2 = Math.floor(Math.random() * 15 + 12); // ~12-27 g
+          const g_H2 = Math.floor(Math.random() * 5 + 4);    // ~4-9 g
+          const g_O2 = Math.floor(Math.random() * 15 + 18);  // ~18-33 g
+
+          const n_NO2 = g_NO2 / 46;
+          const n_H2 = g_H2 / 2;
+          const n_O2 = g_O2 / 32;
+          const n_total = n_NO2 + n_H2 + n_O2;
+          const P_total = (n_total * 0.082 * T_K) / V;
+          const x_NO2 = n_NO2 / n_total;
+          const P_O2 = (n_O2 * 0.082 * T_K) / V;
+
+          // Variable target unknown: 0: P_total, 1: X_NO2, 2: P_O2
+          const targetMode = Math.floor(Math.random() * 3);
+
+          let expectedVal, unitStr, questionCa, questionEs, promptCa, promptEs;
+
+          if (targetMode === 0) {
+            expectedVal = P_total;
+            unitStr = 'atm';
+            questionCa = `Calculeu la <strong>pressió total (atm)</strong> de la mescla al recipient.`;
+            questionEs = `Calcula la <strong>presión total (atm)</strong> de la mezcla en el recipiente.`;
+            promptCa = `Pressió total de la mescla (atm):`;
+            promptEs = `Presión total de la mezcla (atm):`;
+          } else if (targetMode === 1) {
+            expectedVal = x_NO2;
+            unitStr = '-';
+            questionCa = `Calculeu la <strong>fracció molar del diòxid de nitrogen (X_NO₂)</strong> a la mescla.`;
+            questionEs = `Calcula la <strong>fracción molar del dióxido de nitrógeno (X_NO₂)</strong> en la mezcla.`;
+            promptCa = `Fracció molar de NO₂ (adimensional):`;
+            promptEs = `Fracción molar de NO₂ (adimensional):`;
+          } else {
+            expectedVal = P_O2;
+            unitStr = 'atm';
+            questionCa = `Calculeu la <strong>pressió parcial de l'oxigen (P_O₂)</strong> en atm.`;
+            questionEs = `Calcula la <strong>presión parcial del oxígeno (P_O₂)</strong> en atm.`;
+            promptCa = `Pressió parcial de l'O₂ (atm):`;
+            promptEs = `Presión parcial del O₂ (atm):`;
+          }
+
+          return {
+            category: 'dalton',
+            text_ca: `En un recipient de <strong>${V} L</strong> s'introdueixen <strong>${g_NO2} g de NO₂</strong>, <strong>${g_H2} g d'H₂</strong> i <strong>${g_O2} g d'O₂</strong>. El recipient s'escalfa fins a una temperatura de <strong>${T_K} K</strong>.<br>${questionCa}`,
+            text_es: `En un recipiente de <strong>${V} L</strong> se introducen <strong>${g_NO2} g de NO₂</strong>, <strong>${g_H2} g de H₂</strong> y <strong>${g_O2} g de O₂</strong>. El recipiente se calienta hasta una temperatura de <strong>${T_K} K</strong>.<br>${questionEs}`,
+            atomic_masses: `M(NO₂)=46 g/mol; M(H₂)=2 g/mol; M(O₂)=32 g/mol; R=0,082 atm·L/(mol·K)`,
+            question_ca: promptCa,
+            question_es: promptEs,
+            unit: unitStr,
+            expected: expectedVal,
+            tolerance: 0.03,
+            hint_ca: `1) Passa tots els grams de cada gas a mols amb factors de conversió. 2) Suma els mols totals n_T = n(NO₂) + n(H₂) + n(O₂). 3) Recorda que X_i = n_i / n_T i P_i = X_i · P_T = (n_i · R · T) / V.`,
+            hint_es: `1) Pasa todos los gramos de cada gas a moles con factores de conversión. 2) Suma los moles totales n_T = n(NO₂) + n(H₂) + n(O₂). 3) Recuerda que X_i = n_i / n_T y P_i = X_i · P_T = (n_i · R · T) / V.`,
+            steps_ca: [
+              {
+                title: "Pas 1: Conversió de la massa de cada gas a mols mitjançant factors de conversió",
+                tag: "Factor de conversió",
+                color: "blue",
+                content: `Passem la massa en grams de cadascun dels tres gasos a quantitat de substància (mols) amb la seva massa molar:<br>
+                          \\[n_{\\text{NO}_2} = ${g_NO2}\\text{ g NO}_2 \\cdot \\frac{1\\text{ mol NO}_2}{46\\text{ g NO}_2} = \\mathbf{${n_NO2.toFixed(3)}\\text{ mols NO}_2}\\]
+                          \\[n_{\\text{H}_2} = ${g_H2}\\text{ g H}_2 \\cdot \\frac{1\\text{ mol H}_2}{2\\text{ g H}_2} = \\mathbf{${n_H2.toFixed(3)}\\text{ mols H}_2}\\]
+                          \\[n_{\\text{O}_2} = ${g_O2}\\text{ g O}_2 \\cdot \\frac{1\\text{ mol O}_2}{32\\text{ g O}_2} = \\mathbf{${n_O2.toFixed(3)}\\text{ mols O}_2}\\]`
+              },
+              {
+                title: "Pas 2: Nombre total de mols de la mescla ternària",
+                tag: "Mols totals",
+                color: "indigo",
+                content: `Sumem els mols dels tres gasos:<br>
+                          \\[n_{\\text{totals}} = ${n_NO2.toFixed(3)} + ${n_H2.toFixed(3)} + ${n_O2.toFixed(3)} = \\mathbf{${n_total.toFixed(3)}\\text{ mols totals}}\\]`
+              },
+              {
+                title: targetMode === 0 ? "Pas 3: Càlcul de la Pressió Total (P_T)" : (targetMode === 1 ? "Pas 3: Càlcul de la Fracció Molar (X_NO₂)" : "Pas 3: Càlcul de la Pressió Parcial de l'Oxigen (P_O₂)"),
+                tag: "Llei de Dalton",
+                color: "emerald",
+                content: targetMode === 0 ? `
+                          Apliquem l'equació dels gasos ideals als mols totals continguts al recipient comú de \\(${V}\\text{ L}\\):<br>
+                          \\[P_T = \\frac{n_{\\text{totals}} \\cdot R \\cdot T}{V} = \\frac{${n_total.toFixed(3)}\\text{ mol} \\cdot 0{,}082 \\cdot ${T_K}\\text{ K}}{${V}\\text{ L}} = \\mathbf{${P_total.toFixed(2)}\\text{ atm}}\\]
+                        ` : (targetMode === 1 ? `
+                          La fracció molar és el quocient entre els mols de \\(\\text{NO}_2\\) i els mols totals de la mescla:<br>
+                          \\[X_{\\text{NO}_2} = \\frac{n_{\\text{NO}_2}}{n_{\\text{totals}}} = \\frac{${n_NO2.toFixed(3)}}{${n_total.toFixed(3)}} = \\mathbf{${x_NO2.toFixed(3)}}\\]
+                          <div class="mt-2 text-xs text-slate-500 bg-white p-2.5 rounded-xl border border-slate-200">
+                            <strong>Nota:</strong> La fracció molar és una magnitud adimensional (sense unitats) i \\(0 \\le X_i \\le 1\\).
+                          </div>
+                        ` : `
+                          La pressió parcial que exerceix l'oxigen com si ocupés tot sol el recipient és:<br>
+                          \\[P_{\\text{O}_2} = \\frac{n_{\\text{O}_2} \\cdot R \\cdot T}{V} = \\frac{${n_O2.toFixed(3)}\\text{ mol} \\cdot 0{,}082 \\cdot ${T_K}\\text{ K}}{${V}\\text{ L}} = \\mathbf{${P_O2.toFixed(2)}\\text{ atm}}\\]
+                          <div class="mt-2 text-xs text-slate-500 bg-white p-2.5 rounded-xl border border-slate-200">
+                            <strong>Mètode alternatiu:</strong> \\(P_{\\text{O}_2} = X_{\\text{O}_2} \\cdot P_T = \\frac{${n_O2.toFixed(3)}}{${n_total.toFixed(3)}} \\cdot ${P_total.toFixed(2)}\\text{ atm} = ${P_O2.toFixed(2)}\\text{ atm}\\).
+                          </div>
+                        `)
+              }
+            ],
+            steps_es: [
+              {
+                title: "Paso 1: Conversión de masa a moles con factores de conversión",
+                tag: "Factor de conversión",
+                color: "blue",
+                content: `Convertimos la masa en gramos de los tres gases a moles:<br>
+                          \\[n_{\\text{NO}_2} = ${g_NO2}\\text{ g} \\cdot \\frac{1\\text{ mol}}{46\\text{ g}} = \\mathbf{${n_NO2.toFixed(3)}\\text{ moles}}\\]
+                          \\[n_{\\text{H}_2} = ${g_H2}\\text{ g} \\cdot \\frac{1\\text{ mol}}{2\\text{ g}} = \\mathbf{${n_H2.toFixed(3)}\\text{ moles}}\\]
+                          \\[n_{\\text{O}_2} = ${g_O2}\\text{ g} \\cdot \\frac{1\\text{ mol}}{32\\text{ g}} = \\mathbf{${n_O2.toFixed(3)}\\text{ moles}}\\]`
+              },
+              {
+                title: "Paso 2: Moles totales de la mezcla ternaria",
+                tag: "Moles totales",
+                color: "indigo",
+                content: `Sumamos las cantidades de materia:<br>
+                          \\[n_{\\text{totales}} = ${n_NO2.toFixed(3)} + ${n_H2.toFixed(3)} + ${n_O2.toFixed(3)} = \\mathbf{${n_total.toFixed(3)}\\text{ moles}}\\]`
+              },
+              {
+                title: targetMode === 0 ? "Paso 3: Cálculo de la Presión Total (P_T)" : (targetMode === 1 ? "Paso 3: Cálculo de la Fracción Molar (X_NO₂)" : "Paso 3: Cálculo de la Presión Parcial del Oxígeno (P_O₂)"),
+                tag: "Ley de Dalton",
+                color: "emerald",
+                content: targetMode === 0 ? `
+                          Presión total mediante la ecuación de estado general:<br>
+                          \\[P_T = \\frac{n_{\\text{totales}} \\cdot R \\cdot T}{V} = \\frac{${n_total.toFixed(3)} \\cdot 0{,}082 \\cdot ${T_K}}{${V}} = \\mathbf{${P_total.toFixed(2)}\\text{ atm}}\\]
+                        ` : (targetMode === 1 ? `
+                          Fracción molar:\\(\\[X_{\\text{NO}_2} = \\frac{n_{\\text{NO}_2}}{n_{\\text{totales}}} = \\frac{${n_NO2.toFixed(3)}}{${n_total.toFixed(3)}} = \\mathbf{${x_NO2.toFixed(3)}}\\]\\)
+                        ` : `
+                          Presión parcial del oxígeno:<br>
+                          \\[P_{\\text{O}_2} = \\frac{n_{\\text{O}_2} \\cdot R \\cdot T}{V} = \\frac{${n_O2.toFixed(3)} \\cdot 0{,}082 \\cdot ${T_K}}{${V}} = \\mathbf{${P_O2.toFixed(2)}\\text{ atm}}\\]
+                        `)
+              }
+            ]
+          };
+        }
+      },
+
+      // 7. Densitat & Volum Molar: Condicions Normals (c.n.) - Incògnita: V_cn (L)
+      {
+        type: 'density',
+        id: 'GAS-NORMAL-1',
+        title: 'Volum en Condicions Normals (c.n.) amb Factors de Conversió',
+        create: () => {
+          const tempC = Math.floor(Math.random() * 20 + 15);
+          const tempK = tempC + 273;
+          const V = Math.floor(Math.random() * 8 + 4);
+          const P_atm = (Math.random() * 0.8 + 0.9).toFixed(2);
+          const moles = (P_atm * V) / (0.082 * tempK);
+          const expectedVcn = moles * 22.4;
+
+          return {
+            category: 'density',
+            text_ca: `Una certa quantitat de gas a <strong>${tempC} ºC</strong> ocupa un volum de <strong>${V} L</strong> a una pressió de <strong>${P_atm} atm</strong>.<br>Calculeu el <strong>volum en litres (L)</strong> que ocuparia aquest mateix gas en <strong>condicions normals (0 ºC i 1 atm)</strong>.`,
+            text_es: `Una cierta cantidad de gas a <strong>${tempC} ºC</strong> ocupa un volumen de <strong>${V} L</strong> a una presión de <strong>${P_atm} atm</strong>.<br>Calcula el <strong>volumen en litros (L)</strong> que ocuparía este mismo gas en <strong>condiciones normales (0 ºC y 1 atm)</strong>.`,
+            atomic_masses: `Volum molar en c.n. = 22,4 L/mol; R = 0,082 atm·L/(mol·K)`,
+            question_ca: `Volum en condicions normals (L):`,
+            question_es: `Volumen en condiciones normales (L):`,
+            unit: 'L',
+            expected: expectedVcn,
+            tolerance: 0.03,
+            hint_ca: `Troba primer els mols inicials de gas amb PV=nRT (recorda sumar 273 per a T en Kelvin). Després aplica directament el factor de conversió del volum molar en c.n.: (22,4 L / 1 mol).`,
+            hint_es: `Calcula primero los moles iniciales con PV=nRT (recuerda sumar 273 para la T en Kelvin). Después aplica directamente el factor de conversión del volumen molar en c.n.: (22,4 L / 1 mol).`,
+            steps_ca: [
+              {
+                title: "Pas 1: Determinació de la quantitat de gas (mols) a l'estat inicial",
+                tag: "Estat 1",
+                color: "blue",
+                content: `Passem la temperatura inicial a escala absoluta: \\(T_1 = ${tempC} + 273 = ${tempK}\\text{ K}\\).<br>
+                          Aïllem el nombre de mols \\(n\\) de l'equació general:<br>
+                          \\[n = \\frac{P_1 \\cdot V_1}{R \\cdot T_1} = \\frac{${P_atm}\\text{ atm} \\cdot ${V}\\text{ L}}{0{,}082\\frac{\\text{atm}\\cdot\\text{L}}{\\text{mol}\\cdot\\text{K}} \\cdot ${tempK}\\text{ K}} = \\mathbf{${moles.toFixed(3)}\\text{ mols de gas}}\\]`
+              },
+              {
+                title: "Pas 2: Càlcul del volum molar en condicions normals amb factor de conversió",
+                tag: "Factor de conversió",
+                color: "emerald",
+                content: `En condicions normals (\\(0^\\circ\\text{C} = 273\\text{ K}\\) i \\(1\\text{ atm}\\)), 1 mol de qualsevol gas ideal ocupa exactament \\(22{,}4\\text{ L}\\). Apliquem estrictament el <strong>factor de conversió</strong>:<br>
+                          \\[V_{\\text{cn}} = ${moles.toFixed(3)}\\text{ mols de gas} \\cdot \\frac{22{,}4\\text{ L gas}}{1\\text{ mol gas}} = \\mathbf{${expectedVcn.toFixed(2)}\\text{ L}}\\]
+                          <div class="mt-2 text-xs text-slate-500 bg-white p-2.5 rounded-xl border border-slate-200">
+                            <strong>Mètode alternatiu:</strong> Aplicant la llei combinada \\(\\frac{P_1 \\cdot V_1}{T_1} = \\frac{P_2 \\cdot V_2}{T_2}\\) amb \\(P_2 = 1\\text{ atm}\\) i \\(T_2 = 273\\text{ K}\\), s'arriba al mateix valor.
+                          </div>`
+              }
+            ],
+            steps_es: [
+              {
+                title: "Paso 1: Determinación de los moles en el estado inicial",
+                tag: "Estado 1",
+                color: "blue",
+                content: `Temperatura absoluta: \\(T_1 = ${tempC} + 273 = ${tempK}\\text{ K}\\).<br>
+                          Moles despejados con la ecuación de estado:<br>
+                          \\[n = \\frac{P_1 \\cdot V_1}{R \\cdot T_1} = \\frac{${P_atm}\\text{ atm} \\cdot ${V}\\text{ L}}{0{,}082 \\cdot ${tempK}\\text{ K}} = \\mathbf{${moles.toFixed(3)}\\text{ moles}}\\]`
+              },
+              {
+                title: "Paso 2: Cálculo del volumen en c.n. con factor de conversión",
+                tag: "Factor de conversión",
+                color: "emerald",
+                content: `En condiciones normales (\\(0^\\circ\\text{C}\\) y \\(1\\text{ atm}\\)), 1 mol ocupa \\(22{,}4\\text{ L}\\). Aplicamos el <strong>factor de conversión</strong>:<br>
+                          \\[V_{\\text{cn}} = ${moles.toFixed(3)}\\text{ moles de gas} \\cdot \\frac{22{,}4\\text{ L gas}}{1\\text{ mol gas}} = \\mathbf{${expectedVcn.toFixed(2)}\\text{ L}}\\]`
+              }
+            ]
+          };
+        }
+      },
+
+      // 8. Densitat & Volum Molar: Càlcul de Densitat d'un gas en g/L
+      {
+        type: 'density',
+        id: 'GAS-DENS-1',
+        title: 'Càlcul de la Densitat d’un gas',
+        create: () => {
+          const gases = [
+            { name: 'dioxigen (O₂)', M: 32 },
+            { name: 'diòxid de carboni (CO₂)', M: 44 },
+            { name: 'metà (CH₄)', M: 16 }
+          ];
+          const gas = gases[Math.floor(Math.random() * gases.length)];
+          const P_atm = (Math.random() * 0.8 + 0.8).toFixed(2);
+          const T_K = Math.floor(Math.random() * 100 + 220);
+          const d = (P_atm * gas.M) / (0.082 * T_K);
+
+          return {
+            category: 'density',
+            text_ca: `En una bombona hi ha <strong>${gas.name}</strong> a una pressió de <strong>${P_atm} atm</strong> i a una temperatura de <strong>${T_K} K</strong>.<br>Calculeu la <strong>densitat del gas en g/L</strong> en aquestes condicions.`,
+            text_es: `En una bombona hay <strong>${gas.name}</strong> a una presión de <strong>${P_atm} atm</strong> y a una temperatura de <strong>${T_K} K</strong>.<br>Calcula la <strong>densidad del gas en g/L</strong> en estas condiciones.`,
+            atomic_masses: `Massa molar ${gas.name} = ${gas.M} g/mol; R = 0,082 atm·L/(mol·K)`,
+            question_ca: `Densitat del gas en g/L:`,
+            question_es: `Densidad del gas en g/L:`,
+            unit: 'g/L',
+            expected: d,
+            tolerance: 0.03,
+            hint_ca: `Recorda la fórmula deduïda a partir de l'equació dels gasos ideals: P = (d · R · T) / M, on aïllant la densitat s'obté d = (P · M) / (R · T).`,
+            hint_es: `Recuerda la fórmula deducida a partir de la ecuación de los gases ideales: P = (d · R · T) / M, despejando la densidad se obtiene d = (P · M) / (R · T).`,
+            steps_ca: [
+              {
+                title: "Pas 1: Deducció de l'equació d'estat en funció de la densitat",
+                tag: "Teoria",
+                color: "blue",
+                content: `Substituïm el nombre de mols \\(n = \\frac{m}{M}\\) a l'equació fonamental:<br>
+                          \\[P \\cdot V = \\frac{m}{M} \\cdot R \\cdot T \\implies P = \\frac{m}{V} \\cdot \\frac{R \\cdot T}{M}\\]
+                          Com que per definició la densitat és \\(d = \\frac{m}{V}\\), obtenim la relació:<br>
+                          \\[P = \\frac{d \\cdot R \\cdot T}{M}\\]`
+              },
+              {
+                title: "Pas 2: Aïllament algebraic de la densitat (d)",
+                tag: "Àlgebra",
+                color: "indigo",
+                content: `Aïllem la incògnita multiplicant per la massa molar \\(M\\) i dividint per \\(R \\cdot T\\):<br>
+                          \\[d = \\frac{P \\cdot M}{R \\cdot T}\\]`
+              },
+              {
+                title: "Pas 3: Substitució numèrica dels valors donats",
+                tag: "Càlcul",
+                color: "emerald",
+                content: `Substituïm les dades de l'enunciat:<br>
+                          \\[d = \\frac{${P_atm}\\text{ atm} \\cdot ${gas.M}\\text{ g/mol}}{0{,}082\\frac{\\text{atm}\\cdot\\text{L}}{\\text{mol}\\cdot\\text{K}} \\cdot ${T_K}\\text{ K}} = \\mathbf{${d.toFixed(2)}\\text{ g/L}}\\]`
+              }
+            ],
+            steps_es: [
+              {
+                title: "Paso 1: Deducción de la ecuación en función de la densidad",
+                tag: "Teoría",
+                color: "blue",
+                content: `Sustituimos \\(n = \\frac{m}{M}\\) en la ecuación de gases:<br>
+                          \\[P \\cdot V = \\frac{m}{M} \\cdot R \\cdot T \\implies P = \\frac{d \\cdot R \\cdot T}{M}\\]`
+              },
+              {
+                title: "Paso 2: Despejar la densidad (d)",
+                tag: "Álgebra",
+                color: "indigo",
+                content: `Despejamos algebraicamente:<br>
+                          \\[d = \\frac{P \\cdot M}{R \\cdot T}\\]`
+              },
+              {
+                title: "Paso 3: Sustitución numérica",
+                tag: "Cálculo",
+                color: "emerald",
+                content: `Sustituimos los datos:<br>
+                          \\[d = \\frac{${P_atm}\\text{ atm} \\cdot ${gas.M}\\text{ g/mol}}{0{,}082 \\cdot ${T_K}\\text{ K}} = \\mathbf{${d.toFixed(2)}\\text{ g/L}}\\]`
+              }
+            ]
+          };
+        }
+      }
+    ];
+
+    function setProblemCategory(cat) {
+      currentProblemCategory = cat;
+      document.querySelectorAll('.cat-pill').forEach(btn => {
+        btn.classList.remove('active', 'bg-white', 'text-indigo-700', 'shadow-sm', 'font-bold');
+        btn.classList.add('text-slate-600', 'font-medium');
+      });
+      const target = document.getElementById(`cat-${cat}`);
+      if (target) {
+        target.classList.add('active', 'bg-white', 'text-indigo-700', 'shadow-sm', 'font-bold');
+        target.classList.remove('text-slate-600', 'font-medium');
+      }
+      generateNewProblem();
+    }
+
+    function generateNewProblem() {
+      let filtered = problemBlueprints;
+      if (currentProblemCategory !== 'all') {
+        filtered = problemBlueprints.filter(b => b.category === currentProblemCategory || b.type === currentProblemCategory);
+      }
+      const blueprint = filtered[Math.floor(Math.random() * filtered.length)];
+      currentProblem = blueprint.create();
+      currentProblem.id = blueprint.id;
+
+      renderProblem();
+    }
+
+    function renderProblem() {
+      if (!currentProblem) return;
+      document.getElementById('problem-id').textContent = `#${currentProblem.id}`;
+      document.getElementById('problem-badge').textContent = currentProblem.category.toUpperCase();
+      document.getElementById('problem-text').innerHTML = currentLang === 'ca' ? currentProblem.text_ca : currentProblem.text_es;
+      document.getElementById('atomic-masses-data').textContent = currentProblem.atomic_masses;
+      document.getElementById('problem-question-prompt').textContent = currentLang === 'ca' ? currentProblem.question_ca : currentProblem.question_es;
+      document.getElementById('expected-unit-hint').textContent = `${currentLang === 'ca' ? 'Unitat esperada' : 'Unidad esperada'}: ${currentProblem.unit}`;
+      document.getElementById('input-unit-label').textContent = currentProblem.unit;
+      document.getElementById('hint-text').textContent = currentLang === 'ca' ? currentProblem.hint_ca : currentProblem.hint_es;
+
+      const input = document.getElementById('student-answer-input');
+      input.value = '';
+      input.focus();
+      document.getElementById('hint-box').classList.add('hidden');
+      document.getElementById('feedback-banner').className = 'hidden p-4 rounded-2xl text-sm leading-relaxed';
+      document.getElementById('feedback-banner').innerHTML = '';
+      document.getElementById('solution-container').classList.add('hidden');
+
+      renderMath(document.getElementById('problem-text'));
+    }
+
+    function toggleHint() {
+      document.getElementById('hint-box').classList.toggle('hidden');
+    }
+
+    function checkProblemAnswer() {
+      const input = document.getElementById('student-answer-input');
+      const val = parseFloat(input.value.replace(',', '.'));
+      const banner = document.getElementById('feedback-banner');
+      banner.classList.remove('hidden');
+
+      if (isNaN(val)) {
+        banner.className = 'p-4 rounded-2xl text-sm bg-amber-50 border border-amber-200 text-amber-800 font-semibold';
+        banner.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-2 text-amber-600"></i> ${currentLang === 'ca' ? 'Si us plau, introdueix un valor numèric vàlid.' : 'Por favor, introduce un valor numérico válido.'}`;
+        return;
+      }
+
+      const diff = Math.abs(val - currentProblem.expected);
+      const allowed = Math.abs(currentProblem.expected * currentProblem.tolerance);
+
+      // Render Step-by-Step UI Cards with explicit Conversion Factors
+      const solContainer = document.getElementById('solution-container');
+      const stepsDiv = document.getElementById('step-by-step-steps');
+      const steps = currentLang === 'ca' ? currentProblem.steps_ca : currentProblem.steps_es;
+
+      const tagColorMap = {
+        blue: { bg: 'bg-blue-50/70', border: 'border-blue-200', text: 'text-blue-700', badge: 'bg-blue-100' },
+        indigo: { bg: 'bg-indigo-50/70', border: 'border-indigo-200', text: 'text-indigo-700', badge: 'bg-indigo-100' },
+        emerald: { bg: 'bg-emerald-50/70', border: 'border-emerald-200', text: 'text-emerald-700', badge: 'bg-emerald-100' }
+      };
+
+      stepsDiv.innerHTML = steps.map((s, idx) => {
+        const c = tagColorMap[s.color] || tagColorMap.blue;
+        return `
+          <div class="rounded-2xl border ${c.border} ${c.bg} p-4 sm:p-5 shadow-sm space-y-2 transition-all">
+            <div class="flex items-center justify-between pb-2 border-b ${c.border}">
+              <div class="flex items-center space-x-2">
+                <span class="w-6 h-6 rounded-full bg-white border ${c.border} ${c.text} flex items-center justify-center font-extrabold text-xs shadow-xs">
+                  ${idx + 1}
+                </span>
+                <span class="font-bold text-sm text-slate-800">${s.title}</span>
+              </div>
+              <span class="text-[11px] font-bold px-2 py-0.5 rounded-md ${c.badge} ${c.text} uppercase tracking-wider">${s.tag}</span>
+            </div>
+            <div class="text-xs sm:text-sm text-slate-700 leading-relaxed pt-1">
+              ${s.content}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      solContainer.classList.remove('hidden');
+
+      if (diff <= allowed) {
+        scoreCount++;
+        streakCount++;
+        if (streakCount > recordCount) recordCount = streakCount;
+
+        // update category counters
+        if (categoryCounts[currentProblem.category] !== undefined) {
+          categoryCounts[currentProblem.category]++;
+          const elem = document.getElementById(`prog-${currentProblem.category}`);
+          if (elem) elem.textContent = categoryCounts[currentProblem.category];
+        }
+
+        document.getElementById('score-counter').textContent = scoreCount;
+        document.getElementById('record-counter').textContent = recordCount;
+        document.getElementById('streak-counter').textContent = streakCount;
+
+        banner.className = 'p-5 rounded-2xl bg-emerald-50 border border-emerald-300 text-emerald-950 font-semibold shadow-sm';
+        banner.innerHTML = `
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center text-xl shadow-md shadow-emerald-200 flex-shrink-0">
+              <i class="fa-solid fa-circle-check"></i>
+            </div>
+            <div>
+              <div class="text-base font-extrabold text-emerald-900">${currentLang === 'ca' ? 'Molt bé! Resposta correcta:' : '¡Muy bien! Respuesta correcta:'} <span class="font-mono text-emerald-700">${currentProblem.expected.toFixed(2)} ${currentProblem.unit}</span></div>
+              <p class="text-xs text-emerald-800 font-normal mt-0.5">${currentLang === 'ca' ? 'Has aplicat correctament els factors de conversió i les lleis dels gasos.' : 'Has aplicado correctamente los factores de conversión y las leyes de gases.'}</p>
+            </div>
+          </div>
+        `;
+      } else {
+        streakCount = 0;
+        document.getElementById('streak-counter').textContent = 0;
+
+        banner.className = 'p-5 rounded-2xl bg-rose-50 border border-rose-300 text-rose-950 shadow-sm';
+        banner.innerHTML = `
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-rose-500 text-white flex items-center justify-center text-xl shadow-md shadow-rose-200 flex-shrink-0">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <div>
+              <div class="text-base font-extrabold text-rose-900">${currentLang === 'ca' ? 'Resposta no coincident' : 'Respuesta no coincidente'}</div>
+              <p class="text-xs text-rose-800 mt-0.5 leading-relaxed">
+                ${currentLang === 'ca' ? 'Has introduït' : 'Has introducido'} <span class="font-mono font-bold">${val} ${currentProblem.unit}</span>, ${currentLang === 'ca' ? 'però el valor esperat és' : 'pero el valor esperado es'} <span class="font-mono font-bold text-rose-900">${currentProblem.expected.toFixed(2)} ${currentProblem.unit}</span>. Revisa els factors de conversió que hem desglossat a sota.
+              </p>
+            </div>
+          </div>
+        `;
+      }
+
+      renderMath(stepsDiv);
+    }
+
+    function convertTemp(src) {
+      if (src === 'c') {
+        const c = parseFloat(document.getElementById('conv-celsius').value);
+        if (!isNaN(c)) document.getElementById('conv-kelvin').value = (c + 273.15).toFixed(2);
+      } else {
+        const k = parseFloat(document.getElementById('conv-kelvin').value);
+        if (!isNaN(k)) document.getElementById('conv-celsius').value = (k - 273.15).toFixed(2);
+      }
+    }
+
+    function convertPress(src) {
+      if (src === 'mm') {
+        const mm = parseFloat(document.getElementById('conv-mmhg').value);
+        if (!isNaN(mm)) document.getElementById('conv-atm').value = (mm / 760).toFixed(3);
+      } else {
+        const atm = parseFloat(document.getElementById('conv-atm').value);
+        if (!isNaN(atm)) document.getElementById('conv-mmhg').value = Math.round(atm * 760);
+      }
+    }
+
+    function convertVol(src) {
+      if (src === 'ml') {
+        const ml = parseFloat(document.getElementById('conv-ml').value);
+        if (!isNaN(ml)) document.getElementById('conv-l').value = (ml / 1000).toFixed(3);
+      } else {
+        const l = parseFloat(document.getElementById('conv-l').value);
+        if (!isNaN(l)) document.getElementById('conv-ml').value = (l * 1000).toFixed(0);
+      }
+    }
+
+    function printReport() {
+      const studentName = document.getElementById('student-name-input').value.trim() || 'Alumne/a';
+      const min = Math.floor(timerSeconds / 60).toString().padStart(2, '0');
+      const sec = (timerSeconds % 60).toString().padStart(2, '0');
+
+      const reportHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>GasLab - Informe de Sesión</title>
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 40px; color: #1e293b; }
+            h1 { color: #4338ca; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 5px; font-size: 22px; }
+            .badge { display: inline-block; padding: 4px 10px; border-radius: 6px; background: #e0e7ff; color: #4338ca; font-weight: bold; font-size: 11px; }
+            .card { border: 1px solid #cbd5e1; border-radius: 8px; padding: 15px; margin-top: 20px; background: #f8fafc; font-size: 13px; line-height: 1.6; }
+            .stat-grid { display: flex; gap: 15px; margin: 20px 0; }
+            .stat-box { flex: 1; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff; text-align: center; }
+            .stat-box span { font-size: 11px; color: #64748b; font-weight: bold; text-transform: uppercase; }
+            .stat-box strong { font-size: 22px; display: block; color: #0f172a; margin-top: 4px; }
+            .footer { margin-top: 50px; font-size: 11px; color: #64748b; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 15px; }
+          </style>
+        </head>
+        <body>
+          <h1>Informe de Pràctica: Gasos Ideals & Llei de Dalton</h1>
+          <p><strong>Alumne/a:</strong> ${studentName} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>Data:</strong> ${new Date().toLocaleDateString()} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>Temps invertit:</strong> ${min}:${sec}</p>
+          
+          <div class="stat-grid">
+            <div class="stat-box">
+              <span>Aciertos Totales</span>
+              <strong>${scoreCount}</strong>
+            </div>
+            <div class="stat-box">
+              <span>Récord de Racha</span>
+              <strong>${recordCount}</strong>
+            </div>
+            <div class="stat-box">
+              <span>Ideales (PV=nRT)</span>
+              <strong>${categoryCounts.ideal}</strong>
+            </div>
+            <div class="stat-box">
+              <span>Transformacions</span>
+              <strong>${categoryCounts.transf}</strong>
+            </div>
+            <div class="stat-box">
+              <span>Dalton & Mezclas</span>
+              <strong>${categoryCounts.dalton}</strong>
+            </div>
+            <div class="stat-box">
+              <span>Densidad & Vm</span>
+              <strong>${categoryCounts.density}</strong>
+            </div>
+          </div>
+
+          <div class="card">
+            <strong style="color: #0f172a; display: block; margin-bottom: 6px;">Metodologia aplicada:</strong>
+            S'ha practicat la resolució d'exercicis mitjançant <strong>factors de conversió</strong> com a eina central de càlcul quantitatiu (passos de kg a g, g a mols a través de la massa molar, canvis de condicions amb relacions de pressió i temperatura, i càlculs de volum molar en c.n.).
+          </div>
+
+          <div class="footer">
+            © 2026 Elena Ruiz Alfaro
+          </div>
+        </body>
+        </html>
+      `;
+      const w = window.open('', '_blank');
+      w.document.write(reportHtml);
+      w.document.close();
+      w.focus();
+      setTimeout(() => w.print(), 350);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      startTimer();
+      generateNewProblem();
+      setLanguage('ca');
+    });
+  </script>
+</body>
+</html>
